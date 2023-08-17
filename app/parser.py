@@ -1,5 +1,4 @@
-import requests
-from bs4 import BeautifulSoup
+from requests_html import HTMLSession
 import json
 import pandas as pd
 from datetime import datetime
@@ -9,21 +8,13 @@ import os
 
 def get_data():
     try:
-        response = requests.get(url, timeout=3)
-        response.raise_for_status()  # Проверка на успешный HTTP-статус
+        session = HTMLSession()
+        response = session.get(url).json()
 
-        bs = BeautifulSoup(response.text, "lxml")
-        temp = bs.find('pre')
-        json_string = temp.text
-        json_data = json.loads(json_string)
+        return response
 
-        return json_data
-
-    except requests.exceptions.Timeout:
-        raise TimeoutError('Превышено время ожидания при запросе к серверу')
-
-    except requests.exceptions.RequestException as e:
-        raise RuntimeError(f'Ошибка при запросе: {e}')
+    except Exception as e:
+        raise Exception(f"Err: {e}")
 
 
 def check_data():
