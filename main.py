@@ -27,10 +27,13 @@ async def periodic_check():
                 with open(file_path, 'rb') as file:
                     await bot.send_document(chat_id=user_id[0], document=file, caption="❗Пришли новые данные")
 
-                if os.path.isfile(path):
-                    os.remove(path)
-                else:
-                    print('Path is not a file')
+                try:
+                    if os.path.isfile(path):
+                        os.remove(path)
+                    else:
+                        print('Path is not a file')
+                except Exception as e:
+                    print(f"An error occurred while deleting the file: {e}")
 
 if __name__ == '__main__':
     from handlers import dp
