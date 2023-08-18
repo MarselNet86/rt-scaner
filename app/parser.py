@@ -1,5 +1,4 @@
-import requests
-from bs4 import BeautifulSoup
+from requests_html import HTMLSession
 import json
 import pandas as pd
 from datetime import datetime
