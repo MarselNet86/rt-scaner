@@ -1,6 +1,6 @@
 from app import keyboards as kb
 from app.parser import convert_data
-from main import dp
+from main import bot, dp
 from app import database as db
 from aiogram.types import Message
 from aiogram import types
@@ -49,7 +49,13 @@ async def user_buttons(message: Message):
 
 async def handle_data_request(message: Message, request_type: str):
     try:
+        sent_message = await message.answer('Запрос отправлен, пожалуйста ожидайте. '
+                                            'Это может занять некоторое время ⏳')
         file_path = convert_data(request_type)
+
+        await bot.edit_message_text(f'Ваш запрос был успешно обработан ✅',
+                                    message.chat.id, message_id=sent_message.message_id)
+
         with open(file_path, 'rb') as file:
             await message.reply_document(file)
 
