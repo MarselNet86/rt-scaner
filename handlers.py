@@ -4,6 +4,7 @@ from main import dp
 from app import database as db
 from aiogram.types import Message
 from aiogram import types
+import os
 
 
 @dp.message_handler(commands=['start', 'user'])
@@ -25,19 +26,12 @@ async def switcher_handler(message: types.Message):
 
 @dp.message_handler(content_types=['text'])
 async def user_buttons(message: Message):
-
     if message.text == 'Все':
-        file_path = convert_data('all')
-        with open(file_path, 'rb') as file:
-            await message.reply_document(file)
-
+        await handle_data_request(message, 'all')
     elif message.text == 'Без исполнителя':
-        file_path = convert_data('unexecuted')
-        with open(file_path, 'rb') as file:
-            await message.reply_document(file)
+        await handle_data_request(message, 'unexecuted')
 
     elif message.text == 'Уведомления':
-
         if await db.check_notice(message.from_user.id) == 1:
             await message.answer('Здесь вы можете включить или выключить уведомления. '
                                  '\n\nНа данный момент уведомления - ➡Включены', reply_markup=kb.notice_off)
@@ -51,3 +45,18 @@ async def user_buttons(message: Message):
 
     else:
         await message.answer('Команда не распознана, возвращаю в главное меню!', reply_markup=kb.main_menu)
+
+
+async def handle_data_request(message: Message, request_type: str):
+    try:
+        file_path = convert_data(request_type)
+        with open(file_path, 'rb') as file:
+            await message.reply_document(file)
+
+        if os.path.isfile(file_path):
+            os.remove(file_path)
+        else:
+            print('File path is not a file')
+
+    except Exception as e:
+        print(f"An error occurred: {e}")

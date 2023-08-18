@@ -4,6 +4,7 @@ from aiogram import Bot, Dispatcher, executor
 from app import database as db
 from config import token
 import asyncio
+import os
 
 bot = Bot(token=token)
 storage = MemoryStorage()
@@ -18,13 +19,18 @@ async def on_startup(_):
 
 async def periodic_check():
     while True:
-        await asyncio.sleep(300)
+        await asyncio.sleep(5)
         file_path = check_data()
         if file_path:
             user_ids = await db.mailing()
             for user_id in user_ids:
                 with open(file_path, 'rb') as file:
                     await bot.send_document(chat_id=user_id[0], document=file, caption="❗Пришли новые данные")
+
+                if os.path.isfile(path):
+                    os.remove(path)
+                else:
+                    print('Path is not a file')
 
 if __name__ == '__main__':
     from handlers import dp

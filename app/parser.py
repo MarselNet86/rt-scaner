@@ -1,4 +1,5 @@
-from requests_html import HTMLSession
+import requests
+from bs4 import BeautifulSoup
 import json
 import pandas as pd
 from datetime import datetime
@@ -27,16 +28,16 @@ def check_data():
         else:
             read_json = []
 
-        my_list = []
-        for data_1, data_2 in zip(read_json, json_data):
-            if data_1 != data_2:
-                my_list.append(data_2)
+        new_records = []
+        for data_2 in json_data:
+            if data_2 not in read_json:
+                new_records.append(data_2)
 
-        with open('downloads/open.json', 'w', encoding='utf-8') as file:
-            json.dump(json_data, file, ensure_ascii=False)
+        if new_records:
+            with open('downloads/open.json', 'w', encoding='utf-8') as file:
+                json.dump(json_data, file, ensure_ascii=False)
 
-        if my_list:
-            df = pd.DataFrame(my_list, columns=['CRM', 'TASKNAME', 'CITY', 'ASSIGNEE_NAME', 'KS_3', 'KS_23'])
+            df = pd.DataFrame(new_records, columns=['CRM', 'TASKNAME', 'CITY', 'ASSIGNEE_NAME', 'KS_3', 'KS_23'])
             file_name = f'new_{datetime.now().strftime("%d%m%Y_%H%M%S")}.xlsx'
             file_path = f'downloads/{file_name}'
             df.to_excel(file_path, index=False)
