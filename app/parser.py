@@ -12,6 +12,7 @@ import os
 def get_data():
     """Получает JSON массив"""
     try:
+        """
         response = requests.get(url, timeout=3)
         response.raise_for_status()  # Проверка на успешный HTTP-статус
 
@@ -19,6 +20,9 @@ def get_data():
         temp = bs.find('pre')
         json_string = temp.text
         json_data = json.loads(json_string)
+        """
+        session = HTMLSession()
+        json_data = session.get(url).json()
 
         unique_data = []
         seen_records = set()
