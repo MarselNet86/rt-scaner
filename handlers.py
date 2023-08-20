@@ -1,5 +1,5 @@
 from app import keyboards as kb
-from app.parser import convert_data
+from app.parser import convert_data, calculate_city
 from main import bot, dp
 from app import database as db
 from aiogram.types import Message
@@ -52,8 +52,7 @@ async def handle_data_request(message: Message, request_type: str):
         sent_message = await message.answer('Запрос отправлен, пожалуйста ожидайте. '
                                             'Это может занять некоторое время ⏳')
         file_path = convert_data(request_type)
-
-        await bot.edit_message_text(f'Ваш запрос был успешно обработан ✅',
+        await bot.edit_message_text(f'Готово ✅',
                                     message.chat.id, message_id=sent_message.message_id)
 
         with open(file_path, 'rb') as file:
@@ -64,5 +63,9 @@ async def handle_data_request(message: Message, request_type: str):
         else:
             print('File path is not a file')
 
+        if request_type == 'all':
+            text = calculate_city()
+            await message.answer(text)
+
     except Exception as e:
-        print(f"An error occurred: {e}")
+        raise Exception(f"Err: {e}")

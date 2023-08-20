@@ -20,20 +20,11 @@ async def on_startup(_):
 async def periodic_check():
     while True:
         await asyncio.sleep(5)
-        file_path = check_data()
-        if file_path:
+        result_text = check_data()
+        if result_text:
             user_ids = await db.mailing()
             for user_id in user_ids:
-                with open(file_path, 'rb') as file:
-                    await bot.send_document(chat_id=user_id[0], document=file, caption="❗Пришли новые данные")
-
-                try:
-                    if os.path.isfile(path):
-                        os.remove(path)
-                    else:
-                        print('Path is not a file')
-                except Exception as e:
-                    print(f"An error occurred while deleting the file: {e}")
+                await bot.send_message(user_id[0], result_text)
 
 if __name__ == '__main__':
     from handlers import dp
