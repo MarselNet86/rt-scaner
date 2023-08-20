@@ -55,17 +55,16 @@ async def handle_data_request(message: Message, request_type: str):
         await bot.edit_message_text(f'Готово ✅',
                                     message.chat.id, message_id=sent_message.message_id)
 
+        text = calculate_city()
         with open(file_path, 'rb') as file:
             await message.reply_document(file)
+            if request_type == 'all':
+                await message.answer(text)
 
         if os.path.isfile(file_path):
             os.remove(file_path)
         else:
             print('File path is not a file')
-
-        if request_type == 'all':
-            text = calculate_city()
-            await message.answer(text)
 
     except Exception as e:
         raise Exception(f"Err: {e}")

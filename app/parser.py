@@ -1,5 +1,7 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+import requests
+from bs4 import BeautifulSoup
 from requests_html import HTMLSession
 import json
 import pandas as pd
@@ -10,13 +12,18 @@ import os
 def get_data():
     """Получает JSON массив"""
     try:
-        session = HTMLSession()
-        response = session.get(url).json()
+        response = requests.get(url, timeout=3)
+        response.raise_for_status()  # Проверка на успешный HTTP-статус
+
+        bs = BeautifulSoup(response.text, "lxml")
+        temp = bs.find('pre')
+        json_string = temp.text
+        json_data = json.loads(json_string)
 
         unique_data = []
         seen_records = set()
 
-        for record in response:
+        for record in json_data:
             record_id = record.get('CRM')
             if record_id not in seen_records:
                 seen_records.add(record_id)
@@ -94,7 +101,6 @@ def convert_data(message):
 
         if message == 'all':
             columns = ['CRM', 'TASKNAME', 'CITY', 'ASSIGNEE_NAME', 'KS_3', 'KS_23']
-            calculate_city(json_data)
 
         elif message == 'unexecuted':
             for data in json_data:
@@ -116,8 +122,9 @@ def convert_data(message):
         raise Exception(f"Err: {e}")
 
 
-def calculate_city(json_data):
+def calculate_city():
     """Считает кол-во заявок по городам и время между заявками"""
+    json_data = get_data()
 
     city_stats = defaultdict(lambda: {'today': 0, 'more_2_days': 0, 'more_7_days': 0})
     for data in json_data:
