@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
-import requests
-from bs4 import BeautifulSoup
+from requests_html import HTMLSession
 import json
 import pandas as pd
 from config import url
@@ -32,35 +31,6 @@ def get_data():
 def parse_datetime(date_str):
     """Изменяет формат времени"""
     return datetime.strptime(date_str, '%d.%m.%Y %H:%M:%S')
-
-
-def calculate_city():
-    """Считает кол-во заявок по городам и время между заявками"""
-    json_data = get_data()
-
-    city_stats = defaultdict(lambda: {'today': 0, 'more_2_days': 0, 'more_7_days': 0})
-    for data in json_data:
-        city = data['CITY']
-        create_date = parse_datetime(data['CREATE_KI'])
-        current_date = datetime.now()
-        time_difference = current_date - create_date
-
-        if time_difference.days == 0:
-            city_stats[city]['today'] += 1
-        elif time_difference.days > 7:
-            city_stats[city]['more_7_days'] += 1
-        else:
-            city_stats[city]['more_2_days'] += 1
-
-    result_text = ""
-    for city, stats in city_stats.items():
-        total = stats['today'] + stats['more_2_days'] + stats['more_7_days']
-        result_text += f"Город: {city} | Кол-во заявок: {total}\n"
-        result_text += f"1. Новых сегодня - {stats['today']} шт\n"
-        result_text += f"2. Более 2 дня- {stats['more_2_days']} шт\n"
-        result_text += f"3. Более 7 дней - {stats['more_7_days']} шт\n\n"
-
-    return result_text
 
 
 def check_data():
@@ -124,6 +94,7 @@ def convert_data(message):
 
         if message == 'all':
             columns = ['CRM', 'TASKNAME', 'CITY', 'ASSIGNEE_NAME', 'KS_3', 'KS_23']
+            calculate_city(json_data)
 
         elif message == 'unexecuted':
             for data in json_data:
@@ -143,3 +114,31 @@ def convert_data(message):
 
     except Exception as e:
         raise Exception(f"Err: {e}")
+
+
+def calculate_city(json_data):
+    """Считает кол-во заявок по городам и время между заявками"""
+
+    city_stats = defaultdict(lambda: {'today': 0, 'more_2_days': 0, 'more_7_days': 0})
+    for data in json_data:
+        city = data['CITY']
+        create_date = parse_datetime(data['CREATE_KI'])
+        current_date = datetime.now()
+        time_difference = current_date - create_date
+
+        if time_difference.days == 0:
+            city_stats[city]['today'] += 1
+        elif time_difference.days > 7:
+            city_stats[city]['more_7_days'] += 1
+        else:
+            city_stats[city]['more_2_days'] += 1
+
+    result_text = ""
+    for city, stats in city_stats.items():
+        total = stats['today'] + stats['more_2_days'] + stats['more_7_days']
+        result_text += f"Город: {city} | Кол-во заявок: {total}\n"
+        result_text += f"1. Новых сегодня - {stats['today']} шт\n"
+        result_text += f"2. Более 2 дня- {stats['more_2_days']} шт\n"
+        result_text += f"3. Более 7 дней - {stats['more_7_days']} шт\n\n"
+
+    return result_text
