@@ -52,10 +52,11 @@ async def handle_data_request(message: Message, request_type: str):
         sent_message = await message.answer('Запрос отправлен, пожалуйста ожидайте. '
                                             'Это может занять некоторое время ⏳')
         file_path = convert_data(request_type)
+        text = calculate_city()
+
         await bot.edit_message_text(f'Готово ✅',
                                     message.chat.id, message_id=sent_message.message_id)
 
-        text = calculate_city()
         with open(file_path, 'rb') as file:
             await message.reply_document(file)
             if request_type == 'all':
