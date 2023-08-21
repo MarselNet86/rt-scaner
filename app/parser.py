@@ -70,23 +70,24 @@ def check_data():
                 current_date = datetime.now()
 
                 result_text += f"1. Участок: {record['WORKSITE_SHORT_NAME']}\n"
-                result_text += f"2. Исполнитель: {record['ASSIGNEE_NAME']}\n"
-                result_text += f"3. Дата создания: {create_date}\n"
-                result_text += f"4. КС 3 ЛТП: {create_date + timedelta(hours=20)}\n"
-                result_text += f"5. КС 2+3: {open_date + timedelta(hours=24)}\n"
-                result_text += f"6. Интервал согласованный: {start_date} | {stop_date}\n"
+                result_text += f"2. Номер заявки: {record['CRM']}\n"
+                result_text += f"3. Исполнитель: {record['ASSIGNEE_NAME']}\n"
+                result_text += f"4. Дата создания: {create_date}\n"
+                result_text += f"5. КС 3 ЛТП: {create_date + timedelta(hours=20)}\n"
+                result_text += f"6. КС 2+3: {open_date + timedelta(hours=24)}\n"
+                result_text += f"7. Интервал согласованный: {start_date} | {stop_date}\n"
 
                 if stop_date < (create_date + timedelta(hours=20)):
-                    result_text += f"7. Статус: Нормально\n"
+                    result_text += f"8. Статус: Нормально\n"
                 elif stop_date > (create_date + timedelta(hours=20)):
-                    result_text += f"7. Статус: Изменить интервал | {stop_date - (create_date + timedelta(hours=20))}\n"
+                    result_text += f"8. Статус: Изменить интервал | {stop_date - (create_date + timedelta(hours=20))}\n"
                 elif record['ASSIGNEE_NAME'] is None:
-                    result_text += f"7. Статус: Назначить исполнителя | {current_date - create_date}\n"
+                    result_text += f"8. Статус: Назначить исполнителя | {current_date - create_date}\n"
 
                 if record['DATE_CLOSE']:
-                    result_text += f"8. Закрыто: Да | {record['DATE_CLOSE']}\n\n"
+                    result_text += f"9. Закрыто: Да | {record['DATE_CLOSE']}\n\n"
                 else:
-                    result_text += f"8. Закрыто: Нет\n\n"
+                    result_text += f"9. Закрыто: Нет\n\n"
 
             with open('downloads/open.json', 'w', encoding='utf-8') as file:
                 json.dump(json_data, file, ensure_ascii=False)
@@ -104,18 +105,36 @@ def convert_data(message):
         my_list = []
 
         if message == 'all':
-            columns = ['CRM', 'TASKNAME', 'CITY', 'ASSIGNEE_NAME', 'KS_3', 'KS_23']
+            columns = ['CRM', 'WORKSITE_SHORT_NAME', 'CREATE_KI', 'OPEN_DATE', 'START_KI', 'STOP_KI', 'ASSIGNEE_NAME']
 
         elif message == 'unexecuted':
             for data in json_data:
                 if data['ASSIGNEE_NAME'] is None:
                     my_list.append(data)
-            columns = ['CRM', 'TASKNAME', 'CITY', 'KS_3', 'KS_23']
+            columns = ['CRM', 'WORKSITE_SHORT_NAME', 'CREATE_KI', 'OPEN_DATE', 'START_KI', 'STOP_KI', 'COMMENTARY']
 
         else:
             raise ValueError("Invalid message type")
 
+        status_list = []
+        for record in my_list if my_list else json_data:
+            create_date = parse_datetime(record['CREATE_KI'])
+            stop_date = parse_datetime(record['STOP_KI'])
+            current_date = datetime.now()
+
+            result_text = ""
+            if stop_date < (create_date + timedelta(hours=20)):
+                result_text = "Нормально"
+            elif stop_date > (create_date + timedelta(hours=20)):
+                result_text = f"Изменить интервал | {stop_date - (create_date + timedelta(hours=20))}"
+            elif record['ASSIGNEE_NAME'] is None:
+                result_text = f"Назначить исполнителя | {current_date - create_date}"
+
+            status_list.append(result_text)
+
         df = pd.DataFrame(my_list if my_list else json_data, columns=columns)
+        df['STATUS'] = status_list
+
         file_name = f'{message}_{datetime.now().strftime("%d%m%Y_%H%M%S")}.xlsx'
         file_path = f'downloads/{file_name}'
         df.to_excel(file_path, index=False)
